@@ -1,10 +1,10 @@
 package main
 
-import package {
+import (
 	"fmt"
-}
+)
 
 
 func main() {
-	fmt.Printn("Bububu");
+	fmt.Println("Bububu");
 }
