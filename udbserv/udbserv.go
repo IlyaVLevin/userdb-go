@@ -3,17 +3,17 @@ package main
 import (
 	"fmt"
 	"userdb"
-	"encoding/json"
+//	"encoding/json"
 )
 
 func main() {
-	
-	reqCreate := RequestCreateUser{ "JoeSmith", "abcd1234", "jsmith@bbb.com", "1 Broadway"}
-	
-	uid, err := CreateUser( reqCreate )
+
+	reqCreate := userdb.RequestCreateUser{ "JoeSmith", "abcd1234", "jsmith@bbb.com", "1 Broadway"}
+
+	uid, err := userdb.CreateUser( &reqCreate )
 	if err != nil {
-		fmt.Printf("error in user creation: %v", err.Error() )		
+		fmt.Println("error in user creation: ", err.Error() )		
+	} else {
+		fmt.Println("All good: ", uid)
 	}
-	else 
-		fmt.Println("All good")
 }

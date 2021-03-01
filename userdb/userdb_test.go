@@ -3,17 +3,17 @@ package userdb
 import ( "testing" )
 
 func TestCreatUser(t *testing.T) {
-	Init()
+	ResetDb()
 	
 	reqEmpty := RequestCreateUser{ "", "abcd1234", "jsmith@bbb.com", "1 Broadway"}
-	_, err := CreateUser( reqEmpty )
+	_, err := CreateUser( &reqEmpty )
 	if err == nil || err.Error() != "Empty name" {
 		t.Fatalf("improper handling of empty name")
 	}
 
 	reqCreate := RequestCreateUser{ "JoeSmith", "abcd1234", "jsmith@bbb.com", "1 Broadway"}
 
-	uid, err := CreateUser( reqCreate )
+	uid, err := CreateUser( &reqCreate )
 	if err != nil {
 		t.Fatalf("error in user creation: %v", err.Error() )		
 	}
@@ -30,7 +30,7 @@ func TestCreatUser(t *testing.T) {
 	// 
 	reqCreate1 := RequestCreateUser{ "JoeSmith", "1234abcd", "jsmith@mmm.com", "2 Brodway"}
 
-	_, err = CreateUser( reqCreate1 )
+	_, err = CreateUser( &reqCreate1 )
 	if err == nil || err.Error() != "Name already reserved" {
 		t.Fatalf("improper handling of duplicate name")
 	}

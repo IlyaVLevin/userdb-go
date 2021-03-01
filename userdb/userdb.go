@@ -76,9 +76,12 @@ func CreateUser( r *RequestCreateUser ) (userId int, err error) {
 	newuser.addr = r.Addr
 
 	name2idMap[ r.Name ] = userId
-	curu := userMap[userId]
+
+	var curu atomic.Value
 	curu.Store( newuser )
-	
+
+	userMap[userId] = curu
+
 	err = nil
 	return
 }
