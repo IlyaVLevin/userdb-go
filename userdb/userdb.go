@@ -42,7 +42,11 @@ type ResponseGetUser struct {
 	Addr  string
 }
 
-func Init() {
+func init() {
+	ResetDb()
+}
+
+func ResetDb() {
 	userMap = make( map[int] atomic.Value )
 	name2idMap = make( map[string] int)
 	uidCounter = 1000
