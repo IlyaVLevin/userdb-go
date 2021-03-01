@@ -113,7 +113,7 @@ func GetUser( uid int) (resp ResponseGetUser, err error) {
 		return
 	}
 
-	user := curu.Load().(userRecord)
+	user := curu.Load().(*userRecord)
 
 	resp.Name = user.name
 	resp.Email = user.email
