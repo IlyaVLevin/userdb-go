@@ -52,7 +52,7 @@ func (s *stableStorage) getCell( k storageKey ) (*userRecord, error) {
 		return nil, requestError{ "column out of range" }
 	}
 
-	// however accessing the row is safe - it is never relocated
+	// however accessing the row is safe - it never gets relocated
 	return &prow[k.col_], nil
 }
 
