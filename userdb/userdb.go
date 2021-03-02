@@ -13,10 +13,18 @@ type userRecord struct {
 	addr  string
 }
 
-var userMap map[int] atomic.Value           // UID -> userRecord
-var name2idMap map[string] int              // name -> UID
-var cm  sync.Mutex                          // protect record creation
-var uidCounter int                          // global UID generator
+type atomicv struct {
+	V atomic.Value
+}
+
+func (r *atomicv) Store( u *userRecord) {
+	r.V.Store( u )
+}
+
+var userMap map[int] atomicv		// UID -> userRecord
+var name2idMap map[string] int 		// name -> UID
+var cm  sync.Mutex					// protect record creation
+var uidCounter int					// global UID generator
 
 type requestError struct {
 	text string
@@ -47,7 +55,7 @@ func init() {
 }
 
 func ResetDb() {
-	userMap = make( map[int] atomic.Value )
+	userMap = make( map[int] atomicv )
 	name2idMap = make( map[string] int)
 	uidCounter = 1000
 }
@@ -77,10 +85,7 @@ func CreateUser( r *RequestCreateUser ) (userId int, err error) {
 
 	name2idMap[ r.Name ] = userId
 
-	var curu atomic.Value
-	curu.Store( newuser )
-
-	userMap[userId] = curu
+	userMap[userId] = atomicv{ newuser }
 
 	err = nil
 	return
@@ -106,8 +111,8 @@ func UpdateUser( uid int, r* RequestUpdateUser ) error {
 		newUser.addr = r.Addr
 	}
 
-	curu.Store( newUser )    // oldUser to be garbage collected
-	
+	userMap[uid].Store( newUser )    // oldUser to be garbage collected
+
 	return nil
 }
 
