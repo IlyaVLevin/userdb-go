@@ -75,6 +75,10 @@ func (s *stableStorage) addCell() (storageKey, *userRecord) {
 	return k, u
 }
 
+//
+// TBD: on 2nd thought, we may store in the map the pointer to the cell instead of the storage key.
+//      This way there'll be no need to lock the storage for accessing the elements. Are there any drawbacks?
+//
 
 var stb stableStorage
 var userMap map[int] storageKey		// UID -> storage
