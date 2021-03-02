@@ -13,7 +13,7 @@ type userRecord struct {
 	mu    sync.Mutex
 }
 
-const maxNumOfColumns = 10
+const maxNumOfColumns = 1000                     // 10 for testing. 10K in real life?
 
 type columnType [maxNumOfColumns]userRecord
 
