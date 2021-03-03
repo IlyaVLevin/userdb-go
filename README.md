@@ -48,7 +48,7 @@ A single object consisting of one or both of:
 
 #### **URL** : /get/_**UID**_
 
-**Response**: Status OK or a Error message
+**Response**: User record object or a Error message
 
 **Examples** :
 
