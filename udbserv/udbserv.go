@@ -10,13 +10,27 @@ import (
 	"strconv"
 )
 
+type UidResponse struct {
+	Uid int
+}
+
+type ErrorResponse struct {
+	Error string
+}
+
+type StatusResponse struct {
+	Status string
+}
+
 func handleCreateUser(w http.ResponseWriter, req *http.Request) {
 
 	dec := json.NewDecoder( req.Body )
-	var uids []int
+	var uids []UidResponse
 	var expl string
 
 	defer req.Body.Close()
+
+	dec.DisallowUnknownFields()
 
 	for {
 		var cr userdb.RequestCreateUser
@@ -24,7 +38,7 @@ func handleCreateUser(w http.ResponseWriter, req *http.Request) {
 			break
 		} else if err != nil {
 			// signal format error and stop parsing
-			uids = append( uids, -1)
+			uids = append( uids, UidResponse{ -1 })
 			expl = err.Error()
 			break
 		}
@@ -32,11 +46,11 @@ func handleCreateUser(w http.ResponseWriter, req *http.Request) {
 		uid, err := userdb.CreateUser( &cr )
 		if err != nil {
 			// signal format error and stop parsing
-			uids = append( uids, -1)
+			uids = append( uids, UidResponse{ -1 })
 			expl = err.Error()
 			break
 		} else {
-			uids = append( uids, uid)
+			uids = append( uids, UidResponse{ uid })
 		}
 	}
 
@@ -50,11 +64,56 @@ func handleCreateUser(w http.ResponseWriter, req *http.Request) {
 		enc.Encode( uids ) 
 	}
 	if ( expl != "" ) {
-		enc.Encode( expl ) 
+		enc.Encode( ErrorResponse{ expl } )
 	}
 }
 
 func handleUpdateUser(w http.ResponseWriter, req *http.Request){
+
+	arg := strings.TrimPrefix( req.URL.Path, "/update/" )
+
+	var expl string
+
+	enc := json.NewEncoder( w )
+
+	defer req.Body.Close()
+
+	uid, err := strconv.Atoi( arg )
+	if err != nil {
+		expl = "Non-numerical UID"
+	} else {
+
+		dec := json.NewDecoder( req.Body )
+		dec.DisallowUnknownFields()
+
+		var ur userdb.RequestUpdateUser
+
+		// no batch mode for updates
+		errDeco := dec.Decode( &ur )
+		if errDeco == nil {
+			errDeco = dec.Decode( &ur )
+			if errDeco == nil {
+				expl = "Multiple update requests"
+			} else if errDeco != io.EOF {
+				expl = "Malformed request: " + errDeco.Error()
+			}
+		} else {
+			expl = "Malformed request: " + errDeco.Error()
+		}
+
+		if expl == "" {
+			err = userdb.UpdateUser( uid, &ur )
+			if err != nil {
+				expl = err.Error()
+			} else {
+				enc.Encode( StatusResponse{ "OK" } )
+			}
+		}
+	}
+
+	if expl != "" {
+		enc.Encode( StatusResponse{ "ERROR: " + expl } )
+	}
 }
 
 func handleGetUser(w http.ResponseWriter, req *http.Request) {
@@ -77,8 +136,20 @@ func handleGetUser(w http.ResponseWriter, req *http.Request) {
 	}
 
 	if expl != "" {
-		enc.Encode( expl )
+		enc.Encode( ErrorResponse{ expl } )
 	}
+}
+
+func helpUpdateUser(w http.ResponseWriter, _ *http.Request) {
+	expl := "Call:  /update/<UID>   Data: 'email:<email>' and/or 'addr: <address>'"
+	enc := json.NewEncoder( w )
+	enc.Encode( ErrorResponse{ expl } )
+}
+
+func helpGetUser(w http.ResponseWriter, _ *http.Request) {
+	expl := "call:  /get/<UID>"
+	enc := json.NewEncoder( w )
+	enc.Encode( ErrorResponse{ expl } )
 }
 
 func main() {
@@ -92,8 +163,13 @@ func main() {
 	}
 
 	http.HandleFunc("/create/", handleCreateUser)
+	http.HandleFunc("/create", handleCreateUser)
+
 	http.HandleFunc("/update/", handleUpdateUser)
 	http.HandleFunc("/get/", handleGetUser)
+
+	http.HandleFunc("/update", helpUpdateUser)
+	http.HandleFunc("/get", helpGetUser)
 
 	log.Fatal( http.ListenAndServe(":8080", nil) )
 }
