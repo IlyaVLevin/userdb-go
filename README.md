@@ -28,6 +28,8 @@ One or several objects consisting of:
 {"Error":"Name already reserved"}
 ```
 
+--------------------------------------------------------------------------------------------------------
+
 #### **URL** : /update/_**UID**_
 #### **POST** data:
 A single object consisting of one or both of:
@@ -45,6 +47,8 @@ A single object consisting of one or both of:
 > curl --request POST localhost:8080/update/9999 -d "{\"email\":\"ilya@hhh\", \"addr\": \"123 Bway\" }"
 {"Status":"ERROR: UID not found"}
 ```
+
+--------------------------------------------------------------------------------------------------------
 
 #### **URL** : /get/_**UID**_
 
