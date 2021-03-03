@@ -97,9 +97,9 @@ func TestStressTest(t *testing.T) {
 	ResetDb()
 
 	const QUERY_BUF_SIZE = 1000      // number of uids to query and update -- the smaller the number the higher probability of collision
-	const GETTERS_NUM = 10000        // number of querying threads  -- the higher the more probable is the collision
-	const UPDATERS_NUM = 10000		 // number of updating threads  -- the higher the more probable is the collision
-	const CREATORS_NUM = 10000		 // number of threads continuing to create new users in parallel with getters in updaters
+	const GETTERS_NUM = 10000        // number of querying threads  -- the higher the more probable the collision is
+	const UPDATERS_NUM = 10000		 // number of updating threads  -- the higher the more probable the collision is
+	const CREATORS_NUM = 10000		 // number of threads continuing to create new users in parallel with getters and updaters
 	const NUM_QUERIES = 1000			// each getter issues this many queries
 	const NUM_UPDATES = 1000			// each updater makes this many updates
 	const NUM_CREATES = 1000			// each creator creates this many records
