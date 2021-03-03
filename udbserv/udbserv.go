@@ -1,11 +1,10 @@
-package main
+package udbserv
 
 import (
 	"userdb"
 	"encoding/json"
 	"net/http"
 	"io"
-	"log"
 	"strings"
 	"strconv"
 )
@@ -71,6 +70,10 @@ func handleCreateUser(w http.ResponseWriter, req *http.Request) {
 func handleUpdateUser(w http.ResponseWriter, req *http.Request){
 
 	arg := strings.TrimPrefix( req.URL.Path, "/update/" )
+	if arg == "" {
+		helpUpdateUser( w, req )
+		return
+	}
 
 	var expl string
 
@@ -118,6 +121,10 @@ func handleUpdateUser(w http.ResponseWriter, req *http.Request){
 
 func handleGetUser(w http.ResponseWriter, req *http.Request) {
 	arg := strings.TrimPrefix( req.URL.Path, "/get/" )
+	if arg == "" {
+		helpGetUser( w, req )
+		return
+	}
 
 	var expl string
 
@@ -152,15 +159,7 @@ func helpGetUser(w http.ResponseWriter, _ *http.Request) {
 	enc.Encode( ErrorResponse{ expl } )
 }
 
-func main() {
-
-	// create a fictitous user for testing purposes
-	reqCreate := userdb.RequestCreateUser{ "JoeSmith", "1234abcd", "jsmith@mmm.com", "2 Brodway"}
-
-	_, err := userdb.CreateUser( &reqCreate )
-	if err != nil  {
-		log.Fatal( err.Error() )
-	}
+func SetHttpHandlerFuncs() {
 
 	http.HandleFunc("/create/", handleCreateUser)
 	http.HandleFunc("/create", handleCreateUser)
@@ -170,6 +169,4 @@ func main() {
 
 	http.HandleFunc("/update", helpUpdateUser)
 	http.HandleFunc("/get", helpGetUser)
-
-	log.Fatal( http.ListenAndServe(":8080", nil) )
 }
