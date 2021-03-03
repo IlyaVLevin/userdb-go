@@ -24,64 +24,29 @@ type stableStorage struct {
 	sm       sync.Mutex
 }
 
-type storageKey struct {
-	row_, col_ int
-}
+func (s *stableStorage) addCell() *userRecord {
 
-func (s *stableStorage) getCell( k storageKey ) (*userRecord, error) {
-
-	var prow * columnType
-	curNumCols := maxNumOfColumns
-
-	s.sm.Lock()         // otherwise it is not safe to read numRows_ and numCols_
-	if k.row_ == s.numRows_ {
-		curNumCols = s.numCols_
-		if curNumCols > 0 {         // current row already started
-			prow = &s.matrix_[k.row_]
-		}
-	} else if k.row_ < s.numRows_{
-		prow = &s.matrix_[k.row_]
-	}
-	s.sm.Unlock()
-	
-	if prow == nil {
-		return nil, requestError{ "row out of range" }
-	}
-	
-	if k.col_ >= curNumCols {
-		return nil, requestError{ "column out of range" }
-	}
-
-	// however accessing the row is safe - it never gets relocated
-	return &prow[k.col_], nil
-}
-
-func (s *stableStorage) addCell() (storageKey, *userRecord) {
+	// (numRows_, numCols_) points to the cell to be assigned
 
 	s.sm.Lock()
-	k := storageKey{s.numRows_, s.numCols_}
-	if k.col_ == 0 {
+	row, col := s.numRows_, s.numCols_
+	if col == 0 {
 		s.matrix_ = append( s.matrix_, columnType{} )
 	}
-	if k.col_ + 1 ==  maxNumOfColumns {
+	if col + 1 ==  maxNumOfColumns {
 		s.numRows_ += 1
 		s.numCols_ = 0
 	} else {
 		s.numCols_ += 1
 	}
-	u := &s.matrix_[k.row_][k.col_]
+	u := &s.matrix_[row][col]
 	s.sm.Unlock()
 
-	return k, u
+	return u
 }
 
-//
-// TBD: on 2nd thought, we may store in the map the pointer to the cell instead of the storage key.
-//      This way there'll be no need to lock the storage for accessing the elements. Are there any drawbacks?
-//
-
 var stb stableStorage
-var userMap map[int] storageKey		// UID -> storage
+var userMap map[int] *userRecord	// UID -> record in storage
 var name2idMap map[string] int 		// name -> UID
 var cm  sync.Mutex					// protect record creation
 var uidCounter int					// global UID generator
@@ -116,7 +81,7 @@ func init() {
 
 func ResetDb() {
 	cm.Lock()
-	userMap = make( map[int] storageKey )
+	userMap = make( map[int] *userRecord )
 	name2idMap = make( map[string] int)
 	uidCounter = 1000
 	cm.Unlock()
@@ -149,9 +114,9 @@ func CreateUser( r *RequestCreateUser ) (userId int, err error) {
 
 	name2idMap[ r.Name ] = userId
 
-	k, ur := stb.addCell()
-	userMap[userId] = k
-	ur.mu.Lock()
+	ur := stb.addCell()
+	userMap[userId] = ur
+	ur.mu.Lock()		// the record just created, so there will be no wait
 	cm.Unlock()         // unlock global mutex but hold the local one
 	defer ur.mu.Unlock()
 
@@ -166,16 +131,11 @@ func CreateUser( r *RequestCreateUser ) (userId int, err error) {
 
 func UpdateUser( uid int, r* RequestUpdateUser ) error {
 	cm.Lock()
-	uk, ok := userMap[ uid ]
+	user, ok := userMap[ uid ]
 	cm.Unlock()
 
 	if ( !ok ) {
 		return requestError { "UID not found"}
-	}
-
-	user, err := stb.getCell( uk )
-	if err != nil {
-		return requestError { "user record not found - internal error"}
 	}
 
 	user.mu.Lock()
@@ -196,17 +156,11 @@ func GetUser( uid int) (resp ResponseGetUser, err error) {
 	err = nil
 
 	cm.Lock()
-	uk, ok := userMap[ uid ]
+	user, ok := userMap[ uid ]
 	cm.Unlock()
 
 	if ( !ok ) {
 		err = requestError { "UID not found"}
-		return
-	}
-
-	user, err := stb.getCell( uk )
-	if err != nil {
-		err = requestError { "user record not found - internal error"}
 		return
 	}
 
